@@ -47,6 +47,13 @@
     font-size: 14px; color: #c6cbd4; text-align: center; padding: 20px;
   }
   #error { display: none; color: #ff9a8a; }
+  #debug {
+    display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    max-height: 34vh; overflow-y: auto; padding: 8px 10px;
+    background: rgba(0, 0, 0, .88); color: #9be28a;
+    font: 11px/1.5 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap;
+    pointer-events: none;
+  }
   .spin {
     width: 34px; height: 34px; border-radius: 50%;
     border: 3px solid #3a3f47; border-top-color: #e07840;
@@ -58,6 +65,38 @@
     #hint { display: none; }
   }
 </style>
+<script>
+// Diagnostic harness (temporary): records stage log + any window error, and
+// shows it in #debug so a stuck load can be read from a screenshot.
+window.__vlog = [];
+window.__vlogAdd = function (msg) {
+  window.__vlog.push(msg);
+  var d = document.getElementById('debug');
+  if (d) d.textContent = window.__vlog.join('\n');
+};
+window.__vlogShow = function () {
+  var d = document.getElementById('debug');
+  if (d) d.style.display = 'block';
+};
+window.addEventListener('error', function (e) {
+  window.__vlogAdd('WINDOW ERROR: ' + (e.message || e.type) + ' @ ' + (e.filename || '') + ':' + (e.lineno || ''));
+  window.__vlogShow();
+});
+window.addEventListener('unhandledrejection', function (e) {
+  var r = e.reason;
+  window.__vlogAdd('UNHANDLED REJECTION: ' + (r && r.message ? r.message : r));
+  window.__vlogShow();
+});
+if (new URLSearchParams(window.location.search).get('debug') === '1') {
+  window.addEventListener('DOMContentLoaded', function () { window.__vlogShow(); });
+}
+setTimeout(function () {
+  if (!window.__viewerReady) {
+    window.__vlogAdd('WATCHDOG: viewer not ready after 8s');
+    window.__vlogShow();
+  }
+}, 8000);
+</script>
 <script type="importmap">
 { "imports": { "three": "./vendor/three.module.min.js" } }
 </script>
@@ -85,6 +124,7 @@
 </div>
 <div id="loading"><div class="spin"></div><div>Loading the blade…</div></div>
 <div id="error"><div id="errorText">Could not load the 3D model.</div></div>
+<div id="debug"></div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -95,6 +135,8 @@ import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 // ---------------------------------------------------------------------------
 // Scene (millimetres after the x1000 group scale; model centred on origin)
 // ---------------------------------------------------------------------------
+const log = function (m) { if (window.__vlogAdd) window.__vlogAdd(m); };
+log('module: start');
 const app = document.getElementById('app');
 const loadingEl = document.getElementById('loading');
 const errorEl = document.getElementById('error');
@@ -116,12 +158,14 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 app.appendChild(renderer.domElement);
+log('renderer: ok');
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 5000);
 camera.position.set(0, 20, 430);
 
 const controls = new OrbitControls(camera, renderer.domElement);
+log('controls: ok');
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.minDistance = 120;
@@ -131,6 +175,7 @@ controls.maxPolarAngle = Math.PI;
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+log('environment: ok');
 
 const key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(180, 260, 320);
@@ -164,6 +209,7 @@ const handle2Rough = rough('./textures/handle2_roughness.jpg');
 const serialTex = albedo('./textures/serial.png');
 const labelTex = albedo('./textures/handle1_label.png');
 const medallionTex = albedo('./textures/butt_medallion.png');
+log('textures: queued');
 
 // Brazil-flag dot, drawn procedurally (green disc, yellow diamond, blue globe).
 function brazilDotTexture() {
@@ -271,9 +317,11 @@ function applyHandle(design) {
   });
 }
 
+log('glb: fetch start');
 new GLTFLoader().load(
   './model/blade_uv.glb',
   (gltf) => {
+    log('glb: loaded');
     const model = gltf.scene;
     modelGroup.add(model);
     // Classify every primitive mesh, then assign materials.
@@ -296,6 +344,7 @@ new GLTFLoader().load(
     const centre = box.getCenter(new THREE.Vector3());
     modelGroup.position.sub(centre);
     addDecals();
+    log('classified: ' + bladeParts.length + ' blade + ' + handleParts.length + ' handle parts; decals: ok');
     // Deep-link initial state: ?handle=1|2&view=front|back|edge|handle|butt
     // (also used by the automated screenshot checks).
     const params = new URLSearchParams(window.location.search);
@@ -307,6 +356,8 @@ new GLTFLoader().load(
       controls.target.set(...VIEWS[v].tgt);
     }
     loadingEl.style.display = 'none';
+    window.__viewerReady = true;
+    log('ready: animate start');
     animate();
   },
   undefined,
@@ -314,6 +365,8 @@ new GLTFLoader().load(
     loadingEl.style.display = 'none';
     errorEl.style.display = 'flex';
     errorText.textContent = 'Could not load the 3D model (./model/blade_uv.glb). ' + (err && err.message ? err.message : '');
+    log('GLB ERROR: ' + (err && err.message ? err.message : err));
+    window.__vlogShow();
     console.error(err);
   }
 );
