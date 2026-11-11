@@ -1,5 +1,31 @@
 # Resonant demo — texture sources and processing
 
+## v2.1 (2026-11-11) — fix: back face black + face figure mismatch
+
+Live diagnosis (browser screenshots + pixel sampling, 2026-11-11 02:12–02:17):
+- **Back face entirely black** (centre RGB 14,5,6 vs front 114,84,84 —
+  8–10× darker, darker than the page background). Rotation test: turning
+  the same back face toward the light brightened it ~6×, so the texture
+  was present and correct — the cause was LIGHTING, not the texture.
+  The front key light (180,260,320) leaves the back face almost
+  unlit. Fix: a back key light mirroring the front key
+  (-180,260,-320, intensity 2.0) in `viewer.js`.
+- **Face figure mismatch.** The v2 library rosewood (rosewood_veneer1)
+  shows large cathedral/flame ovals with dark centres; the real blade
+  (client photos) has fine straight longitudinal grain, no figures.
+  Every vertical band of the 16K master was checked — all contain
+  cathedral figures; no straight-grain band exists in that texture.
+  Fix: the face albedo + roughness were restored to v1 (the client's
+  own photo — the only texture that can match by definition); the
+  normal map is now Sobel-derived from that photo. The retired
+  veneer1 masters stay in `v2-masters/` for reference.
+- Also checked as an alternative: Poly Haven `rosewood_veneer_02`
+  (free via API up to 8K — the earlier "Wood Vault" claim was wrong),
+  straight horizontal grain, 8K masters downloaded + md5-verified
+  (`rosewood_veneer_02_diff_8k.jpg`, `..._rough_8k.jpg`). NOT used:
+  it is still a different piece of wood (elongated lens figures),
+  and the goal is to match the original photo, not a similar wood.
+
 ## v2 (2026-11-11) — library PBR masters (CC0), graded to the product
 
 Masters are kept at full resolution in `textures/v2-masters/` (NOT shipped
