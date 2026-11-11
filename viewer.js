@@ -150,14 +150,24 @@ const MAT = {
   // Blade rim: light spruce-like wood strip (fir stand-in, see SOURCES.md).
   // The real edge shows the ply layers; a layered edge texture is future work.
   bladeRim: std({ map: rimAlbedo, roughnessMap: rimRough, roughness: 1.0 }),
-  handle1Face: std({ map: handle1Albedo, roughnessMap: handle1Rough, normalMap: handle1Normal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 1.0 }),
+  // v2.7: handle faces keep their roughness map (0.55–0.75) but the
+  // environment contribution is halved. The shoulder (the handle face's
+  // curved top, facing the key light and the bright ceiling of the
+  // environment map) read as a light-grey dome (live 108 vs handle body
+  // ~55). The v2.6 roughness-map fix only dimmed it (167 -> 105): the rest
+  // is diffuse + environment light, which roughness cannot remove. A first
+  // v2.7 attempt (matte + env 0.25 + a strong 30% shoulder grade) overshot
+  // and crushed the shoulder to near-black (~23), so this is the gentler
+  // version: envMapIntensity 0.6 plus a narrow 12% shoulder grade in the
+  // albedo itself (0.75 at the very top, see SOURCES.md §v2.7).
+  handle1Face: std({ map: handle1Albedo, roughnessMap: handle1Rough, normalMap: handle1Normal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 1.0, envMapIntensity: 0.6 }),
   // v2.6: caps kept matte (roughness 0.9+) so they read as dark wood, not a
   // highlight. (An earlier guess blamed the top cap for the light-grey blob
   // on the handle shoulder; a debug render proved the blob was the handle
   // face's own specular pop — the fix is the handle roughness maps, see
   // SOURCES.md §v2.6.)
   handle1Cap: std({ color: 0x1a1210, roughness: 0.95 }),
-  handle2Face: std({ map: handle2Albedo, roughnessMap: handle2Rough, roughness: 1.0 }),
+  handle2Face: std({ map: handle2Albedo, roughnessMap: handle2Rough, roughness: 1.0, envMapIntensity: 0.6 }),
   handle2Cap: std({ color: 0xd8cbb2, roughness: 0.9 }),
 };
 
