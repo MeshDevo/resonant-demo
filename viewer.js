@@ -222,10 +222,10 @@ new GLTFLoader().load(
     const h = Number(params.get('handle'));
     applyHandle(h === 2 ? 2 : 1);
     const v = params.get('view');
-    if (v && VIEWS[v]) {
-      camera.position.set(...VIEWS[v].pos);
-      controls.target.set(...VIEWS[v].tgt);
-    }
+    currentBase = (v && VIEWS[v]) ? VIEWS[v] : VIEWS.front;
+    const f = applyFraming(currentBase);
+    camera.position.copy(f.pos);
+    controls.target.copy(f.tgt);
     loadingEl.style.display = 'none';
     window.__viewerReady = true;
     log('ready: animate start');
@@ -243,7 +243,9 @@ new GLTFLoader().load(
 );
 
 // ---------------------------------------------------------------------------
-// Camera presets + smooth tween
+// Camera presets + smooth tween + band-aware framing
+// The blade is framed into the free band between the header and the bottom
+// panel, so the title never covers the model and the hint stays readable.
 // ---------------------------------------------------------------------------
 const VIEWS = {
   front:  { pos: [0, 0, 430],     tgt: [0, 0, 0] },
@@ -252,16 +254,49 @@ const VIEWS = {
   handle: { pos: [90, -40, 300],  tgt: [0, -75, 0] },
   butt:   { pos: [0, -430, 90],   tgt: [0, -129, 0] },
 };
+// Base (unframed) view currently shown; framing adds distance + band offset.
+let currentBase = VIEWS.front;
+
+// Distance + vertical target offset so the 258 mm blade fits the free band
+// (header height .. panel top) with a margin, on any viewport.
+function bandFrame() {
+  const headerEl = document.querySelector('header');
+  const panelEl = document.getElementById('panel');
+  const top = (headerEl ? headerEl.offsetHeight : 90) + 10;
+  const bottom = window.innerHeight - (panelEl ? panelEl.offsetHeight : 120) - 12;
+  const bandH = Math.max(200, bottom - top);
+  const bandCenterPx = (top + bottom) / 2;
+  const needVisH = 258 * 1.06 * (window.innerHeight / bandH);
+  const needVisW = 151 * 1.08;
+  const visH = Math.max(needVisH, needVisW / camera.aspect);
+  const dist = THREE.MathUtils.clamp(
+    visH / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))), 160, 900);
+  // Target below the blade centre moves the blade up on screen (and vice versa).
+  const offY = (bandCenterPx - window.innerHeight / 2) * (visH / window.innerHeight);
+  return { dist, offY };
+}
+
+function applyFraming(view) {
+  const f = bandFrame();
+  const base = new THREE.Vector3(...view.tgt);
+  const dir = new THREE.Vector3(...view.pos).sub(base).normalize();
+  const tgt = new THREE.Vector3(base.x, base.y + f.offY, base.z);
+  const pos = tgt.clone().add(dir.multiplyScalar(f.dist));
+  return { pos, tgt };
+}
+
 let tween = null;
 function flyTo(view) {
   const v = VIEWS[view];
   if (!v) return;
+  currentBase = v;
+  const f = applyFraming(v);
   tween = {
     t: 0,
     fromPos: camera.position.clone(),
-    toPos: new THREE.Vector3(...v.pos),
+    toPos: f.pos,
     fromTgt: controls.target.clone(),
-    toTgt: new THREE.Vector3(...v.tgt),
+    toTgt: f.tgt,
   };
 }
 document.querySelectorAll('#views button').forEach((b) => {
@@ -275,6 +310,9 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  const f = applyFraming(currentBase);
+  camera.position.copy(f.pos);
+  controls.target.copy(f.tgt);
 });
 
 function animate() {
