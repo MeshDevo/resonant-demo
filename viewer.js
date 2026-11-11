@@ -57,7 +57,15 @@ scene.add(fill);
 scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1c20, 0.35));
 
 // ---------------------------------------------------------------------------
-// Textures (photo-derived PBR maps; see textures/SOURCES.md)
+// Textures (v2 PBR maps; see textures/SOURCES.md)
+//   - Blade face: Poly Haven rosewood_veneer1 (CC0), 16K masters, shipped 4K,
+//     colour-graded to the real face tone from the client photos.
+//   - Handle 1: Meshy smooth dark wood (CC0, ambientCG Wood027), 4K masters,
+//     shipped 2K, rotated so the grain runs along the handle, graded near-black.
+//   - Blade rim: Meshy fir-wood strip (CC0, ambientCG Wood092) — a stand-in
+//     for the intermediate spruce layer (Fir != Spruce); see SOURCES.md.
+//   - Handle 2 (padauk + 3 light stripes) and all decals (serial, PALIS/OFF
+//     label, medallion) stay v1, derived from the client photos.
 // ---------------------------------------------------------------------------
 const texLoader = new THREE.TextureLoader();
 function albedo(path) {
@@ -71,10 +79,20 @@ function rough(path) {
   t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   return t;
 }
+function normal(path) {
+  // Normal maps stay in linear (non-colour) space — no colorSpace set.
+  const t = texLoader.load(path);
+  t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  return t;
+}
 const bladeFaceAlbedo = albedo('./textures/blade_face_albedo.jpg');
 const bladeFaceRough = rough('./textures/blade_face_roughness.jpg');
+const bladeFaceNormal = normal('./textures/blade_face_normal.jpg');
+const rimAlbedo = albedo('./textures/blade_rim_albedo.jpg');
+const rimRough = rough('./textures/blade_rim_roughness.jpg');
 const handle1Albedo = albedo('./textures/handle1_albedo.jpg');
 const handle1Rough = rough('./textures/handle1_roughness.jpg');
+const handle1Normal = normal('./textures/handle1_normal.jpg');
 const handle2Albedo = albedo('./textures/handle2_albedo.jpg');
 const handle2Rough = rough('./textures/handle2_roughness.jpg');
 const serialTex = albedo('./textures/serial.png');
@@ -105,10 +123,11 @@ function brazilDotTexture() {
 // ---------------------------------------------------------------------------
 const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ metalness: 0 }, o));
 const MAT = {
-  bladeFace: std({ map: bladeFaceAlbedo, roughnessMap: bladeFaceRough, roughness: 1.0 }),
-  // Blade rim: the real edge is layered light wood (no photo texture exists for it).
-  bladeRim: std({ color: 0xd9c39a, roughness: 0.55 }),
-  handle1Face: std({ map: handle1Albedo, roughnessMap: handle1Rough, roughness: 1.0 }),
+  bladeFace: std({ map: bladeFaceAlbedo, roughnessMap: bladeFaceRough, normalMap: bladeFaceNormal, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 1.0 }),
+  // Blade rim: light spruce-like wood strip (fir stand-in, see SOURCES.md).
+  // The real edge shows the ply layers; a layered edge texture is future work.
+  bladeRim: std({ map: rimAlbedo, roughnessMap: rimRough, roughness: 1.0 }),
+  handle1Face: std({ map: handle1Albedo, roughnessMap: handle1Rough, normalMap: handle1Normal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 1.0 }),
   handle1Cap: std({ color: 0x1a1210, roughness: 0.5 }),
   handle2Face: std({ map: handle2Albedo, roughnessMap: handle2Rough, roughness: 1.0 }),
   handle2Cap: std({ color: 0xd8cbb2, roughness: 0.6 }),
