@@ -1,5 +1,32 @@
 # Resonant demo — texture sources and processing
 
+## v2.4 (2026-11-11) — high-resolution TRUE face (front + back), developed not copied
+
+Henry's challenge: we develop the racket and make it more realistic — not
+just take what's there. The answer is in the realism corpus itself: the
+client's 2048px photos are downscaled copies of the official site's 6091px
+originals (manifest-curated.json: tier0_01 = duplicate of tier1_77, 6091px).
+The same photo, three times sharper, real detail — no invention.
+
+- **Front** (`blade_face_*`, 2350×1784 native): re-extracted from
+  `tier1_77_palis_flared_1.jpg` (6091×6091, official media library), same crop
+  as v1 scaled ×6091/2048 (x1843–4193, y1338–3122), flat-field corrected
+  (±10% cap). Mean RGB (76.4, 50.7, 50.0) matches v1 (74.9, 49.0, 48.5) —
+  same photo, same tone, 3× the native pixels.
+- **Back** (`blade_back_*`, 2350×1784 native): separate texture from
+  `tier1_50_palis_flared_3.jpg` (6091×6091, the back photo), same crop —
+  the real back has its own grain pattern. Mean RGB (74.1, 47.0, 45.7).
+- viewer.js now classifies blade faces by **signed** normal Z: front (+Z) and
+  back (−Z) get their own materials (`bladeFaceFront` / `bladeFaceBack`).
+  Handle face_z primitives are unaffected (applyHandle treats any non-cap
+  class as the face material).
+- md5 (first 12): face albedo `3cb8854e59c0`, rough `be8088937de9`,
+  normal `6ad5015872c4`; back albedo `54a3c2590461`, rough `2cd77781fe96`,
+  normal `b654789896f2`.
+- What is still NOT invented: the layered edge. Ply count/order/thicknesses
+  are unknown, so the rim keeps the labelled fir stand-in; a layered edge
+  would be fabrication, not development.
+
 ## v2.1 (2026-11-11) — fix: back face black + face figure mismatch
 
 Live diagnosis (browser screenshots + pixel sampling, 2026-11-11 02:12–02:17):
