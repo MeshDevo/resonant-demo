@@ -51,6 +51,12 @@ log('environment: ok');
 const key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(180, 260, 320);
 scene.add(key);
+// Back key (v2.1 fix): mirrors the front key. Without it the back face
+// rendered ~10x darker than the front (measured live: back centre RGB
+// 14,5,6 vs front 114,84,84) — the "unjustified blackness" the user saw.
+const back = new THREE.DirectionalLight(0xffffff, 2.0);
+back.position.set(-180, 260, -320);
+scene.add(back);
 const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55);
 fill.position.set(-260, 60, -180);
 scene.add(fill);
@@ -58,8 +64,14 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1c20, 0.35));
 
 // ---------------------------------------------------------------------------
 // Textures (v2 PBR maps; see textures/SOURCES.md)
-//   - Blade face: Poly Haven rosewood_veneer1 (CC0), 16K masters, shipped 4K,
-//     colour-graded to the real face tone from the client photos.
+//   - Blade face (v2.1): the CLIENT'S OWN PHOTO texture (v1), restored.
+//     The v2 library rosewood (Poly Haven rosewood_veneer1) was retired
+//     for the face: its large cathedral/flame ovals with dark centres do
+//     not exist in the real blade, which has fine straight longitudinal
+//     grain. No library veneer can match the photo by definition — the
+//     photo itself is the only exact match. PBR support stays improved:
+//     roughness from the photo luminance, normal Sobel-derived from it.
+//   - Handle 1: Meshy smooth dark wood (CC0, ambientCG Wood027), 4K masters,
 //   - Handle 1: Meshy smooth dark wood (CC0, ambientCG Wood027), 4K masters,
 //     shipped 2K, rotated so the grain runs along the handle, graded near-black.
 //   - Blade rim: Meshy fir-wood strip (CC0, ambientCG Wood092) — a stand-in
