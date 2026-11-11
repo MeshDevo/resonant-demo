@@ -128,7 +128,9 @@ window.addEventListener('error', function (e) {
 });
 window.addEventListener('unhandledrejection', function (e) {
   var r = e.reason;
-  window.__vlogAdd('UNHANDLED REJECTION: ' + (r && r.message ? r.message : r));
+  var detail;
+  try { detail = (r && r.message) ? r.message : JSON.stringify(r); } catch (err) { detail = String(r); }
+  window.__vlogAdd('UNHANDLED REJECTION: ' + detail);
   window.__vlogShow();
 });
 if (new URLSearchParams(window.location.search).get('debug') === '1') {

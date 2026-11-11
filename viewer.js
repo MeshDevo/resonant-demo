@@ -51,13 +51,15 @@ log('environment: ok');
 const key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(180, 260, 320);
 scene.add(key);
-// Back key (v2.1 fix, strengthened in v2.2 and v2.4): mirrors the front key.
-// Without it the back face rendered ~10x darker than the front (measured
+// Back key (v2.1 fix, strengthened in v2.2, v2.4 and v2.6): mirrors the front
+// key. Without it the back face rendered ~10x darker than the front (measured
 // live: back centre RGB 14,5,6 vs front 114,84,84). v2.1 raised it to 2.0 and
 // the back reached only ~43% of the front (49 vs 114); v2.2 raised it to 3.0
-// and the back reached ~62% (64 vs 103). The response is roughly +15 red
-// per +1.0 intensity, so v2.4 raises it to 5.0 to close the remaining gap.
-const back = new THREE.DirectionalLight(0xffffff, 5.0);
+// and the back reached ~62% (64 vs 103); v2.4 raised it to 5.0 and the back
+// reached ~82% (95 vs 116). The response is roughly +15 red per +1.0
+// intensity, so v2.6 raises it to 6.0 to close the remaining gap without
+// overshooting the front.
+const back = new THREE.DirectionalLight(0xffffff, 6.0);
 back.position.set(-180, 260, -320);
 scene.add(back);
 const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55);
@@ -149,9 +151,14 @@ const MAT = {
   // The real edge shows the ply layers; a layered edge texture is future work.
   bladeRim: std({ map: rimAlbedo, roughnessMap: rimRough, roughness: 1.0 }),
   handle1Face: std({ map: handle1Albedo, roughnessMap: handle1Rough, normalMap: handle1Normal, normalScale: new THREE.Vector2(0.5, 0.5), roughness: 1.0 }),
-  handle1Cap: std({ color: 0x1a1210, roughness: 0.5 }),
+  // v2.6: caps kept matte (roughness 0.9+) so they read as dark wood, not a
+  // highlight. (An earlier guess blamed the top cap for the light-grey blob
+  // on the handle shoulder; a debug render proved the blob was the handle
+  // face's own specular pop — the fix is the handle roughness maps, see
+  // SOURCES.md §v2.6.)
+  handle1Cap: std({ color: 0x1a1210, roughness: 0.95 }),
   handle2Face: std({ map: handle2Albedo, roughnessMap: handle2Rough, roughness: 1.0 }),
-  handle2Cap: std({ color: 0xd8cbb2, roughness: 0.6 }),
+  handle2Cap: std({ color: 0xd8cbb2, roughness: 0.9 }),
 };
 
 // ---------------------------------------------------------------------------
