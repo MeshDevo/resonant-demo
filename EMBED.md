@@ -2,6 +2,13 @@
 
 Demo URL (live): https://meshdevo.github.io/resonant-demo/
 
+## Easiest way — the Embed button on the demo page
+
+Open the demo, click **"Embed on your website"** in the bottom panel:
+it shows the iframe code with a **Copy code** button, and a link to
+**download the .zip** to host the demo on your own server instead.
+No files to send by email — the client copies it straight from the page.
+
 ## Option 1 — Link to the demo (simplest)
 
 From any page on resonant-tt.com, link to the demo:

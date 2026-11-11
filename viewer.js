@@ -51,11 +51,13 @@ log('environment: ok');
 const key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(180, 260, 320);
 scene.add(key);
-// Back key (v2.1 fix, strengthened in v2.2): mirrors the front key. Without it
-// the back face rendered ~10x darker than the front (measured live: back centre
-// RGB 14,5,6 vs front 114,84,84). v2.1 raised it to 2.0 and the back reached
-// only ~43% of the front (49 vs 114), so v2.2 raises it to 3.0.
-const back = new THREE.DirectionalLight(0xffffff, 3.0);
+// Back key (v2.1 fix, strengthened in v2.2 and v2.4): mirrors the front key.
+// Without it the back face rendered ~10x darker than the front (measured
+// live: back centre RGB 14,5,6 vs front 114,84,84). v2.1 raised it to 2.0 and
+// the back reached only ~43% of the front (49 vs 114); v2.2 raised it to 3.0
+// and the back reached ~62% (64 vs 103). The response is roughly +15 red
+// per +1.0 intensity, so v2.4 raises it to 5.0 to close the remaining gap.
+const back = new THREE.DirectionalLight(0xffffff, 5.0);
 back.position.set(-180, 260, -320);
 scene.add(back);
 const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55);
@@ -101,6 +103,11 @@ function normal(path) {
 const bladeFaceAlbedo = albedo('./textures/blade_face_albedo.jpg');
 const bladeFaceRough = rough('./textures/blade_face_roughness.jpg');
 const bladeFaceNormal = normal('./textures/blade_face_normal.jpg');
+// v2.4: the back face gets its own texture — the real back has its own grain
+// (same product, photographed from the back: tier1_50_palis_flared_3.jpg).
+const bladeBackAlbedo = albedo('./textures/blade_back_albedo.jpg');
+const bladeBackRough = rough('./textures/blade_back_roughness.jpg');
+const bladeBackNormal = normal('./textures/blade_back_normal.jpg');
 const rimAlbedo = albedo('./textures/blade_rim_albedo.jpg');
 const rimRough = rough('./textures/blade_rim_roughness.jpg');
 const handle1Albedo = albedo('./textures/handle1_albedo.jpg');
@@ -136,7 +143,8 @@ function brazilDotTexture() {
 // ---------------------------------------------------------------------------
 const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ metalness: 0 }, o));
 const MAT = {
-  bladeFace: std({ map: bladeFaceAlbedo, roughnessMap: bladeFaceRough, normalMap: bladeFaceNormal, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 1.0 }),
+  bladeFaceFront: std({ map: bladeFaceAlbedo, roughnessMap: bladeFaceRough, normalMap: bladeFaceNormal, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 1.0 }),
+  bladeFaceBack: std({ map: bladeBackAlbedo, roughnessMap: bladeBackRough, normalMap: bladeBackNormal, normalScale: new THREE.Vector2(0.7, 0.7), roughness: 1.0 }),
   // Blade rim: light spruce-like wood strip (fir stand-in, see SOURCES.md).
   // The real edge shows the ply layers; a layered edge texture is future work.
   bladeRim: std({ map: rimAlbedo, roughnessMap: rimRough, roughness: 1.0 }),
@@ -149,8 +157,9 @@ const MAT = {
 // ---------------------------------------------------------------------------
 // Model load + classification
 // The glTF stores metres (spec); the group scales x1000 so the scene is in mm.
-// Primitives are classified by their mean normal (face_z / cap_y / rim) and by
-// bounding box (blade vs front/back handle), using the verified CAD dimensions.
+// Primitives are classified by their mean normal (face_front / face_back /
+// cap_y / rim) and by bounding box (blade vs front/back handle), using the
+// verified CAD dimensions.
 // ---------------------------------------------------------------------------
 const modelGroup = new THREE.Group();
 modelGroup.scale.setScalar(1000);
@@ -162,12 +171,14 @@ let labelMesh = null, brazilMesh = null, medallionMesh = null;
 
 function classify(mesh) {
   const n = mesh.geometry.attributes.normal;
-  let sx = 0, sy = 0, sz = 0;
+  let sx = 0, sy = 0, sz = 0, szSigned = 0;
   for (let i = 0; i < n.count; i++) {
     sx += Math.abs(n.getX(i)); sy += Math.abs(n.getY(i)); sz += Math.abs(n.getZ(i));
+    szSigned += n.getZ(i);
   }
   const m = [sx / n.count, sy / n.count, sz / n.count];
-  if (m[2] > 0.9) return 'face_z';
+  // Front (+Z) and back (-Z) faces are separate textures since v2.4.
+  if (m[2] > 0.9) return szSigned > 0 ? 'face_front' : 'face_back';
   if (m[1] > 0.9) return 'cap_y';
   return 'rim';
 }
@@ -236,7 +247,8 @@ new GLTFLoader().load(
       // Blade: z within ±3 mm. Handles: z +3..+13 mm (front) or -13..-3 mm (back).
       const isBlade = bb.min.z > -0.0035 && bb.max.z < 0.0035;
       if (isBlade) {
-        obj.material = cls === 'face_z' ? MAT.bladeFace : MAT.bladeRim;
+        obj.material = cls === 'face_front' ? MAT.bladeFaceFront
+          : cls === 'face_back' ? MAT.bladeFaceBack : MAT.bladeRim;
         bladeParts.push({ mesh: obj, cls });
       } else {
         handleParts.push({ mesh: obj, cls });

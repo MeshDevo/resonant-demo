@@ -44,6 +44,24 @@
   }
   .panel-link:hover { border-color: #e07840; }
   .panel-link span { color: #e07840; }
+  /* Embed dialog (v2.3): lets the client copy the iframe snippet straight
+     from the page, or download the self-hosting .zip. */
+  #embedBox {
+    display: none; position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%); width: min(92vw, 560px); z-index: 15;
+    padding: 18px; border-radius: 14px; background: rgba(16, 18, 22, .97);
+    border: 1px solid #3a3f47; color: #e8e9eb; font-size: 13px; line-height: 1.55;
+  }
+  #embedBox.open { display: block; }
+  #embedBox h2 { font-size: 15px; margin-bottom: 8px; letter-spacing: .05em; }
+  #embedBox p { color: #a7adb8; font-size: 12.5px; margin-bottom: 10px; }
+  #embedBox p a { color: #e07840; }
+  #embedBox textarea {
+    width: 100%; height: 96px; resize: none; border-radius: 8px; padding: 10px;
+    border: 1px solid #3a3f47; background: #0e1013; color: #9be28a;
+    font: 11.5px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  }
+  #embedBox .row { margin-top: 12px; }
   #hint { margin-top: 6px; font-size: 12px; color: #9aa0a6; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
   #panel {
     position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
@@ -151,11 +169,42 @@ setTimeout(function () {
   <div class="row">
     <a class="panel-link" href="https://resonant-tt.com/en/shop/hoelzer/palis/" target="_blank" rel="noopener">View on <span>resonant-tt.com</span> ↗</a>
   </div>
+  <div class="row">
+    <button id="embedBtn">Embed on your website</button>
+  </div>
+</div>
+<div id="embedBox">
+  <h2>Embed this viewer on your website</h2>
+  <p>Paste this code into a Custom HTML block (WordPress) or any page. It shows the live demo from this site — no files to upload. Or <a href="./resonant-demo-package.zip" download>download the .zip</a> to host it on your own server instead.</p>
+  <textarea id="embedCode" readonly><iframe src="https://meshdevo.github.io/resonant-demo/" width="100%" height="720" style="border:0; border-radius:12px; background:#17191e;" loading="lazy" allowfullscreen title="RESONANT PALIS OFF — Interactive 3D Configurator (Demo)"></iframe></textarea>
+  <div class="row">
+    <button id="embedCopy">Copy code</button>
+    <button id="embedClose" class="view">Close</button>
+  </div>
 </div>
 <div id="loading"><div class="spin"></div><div>Loading the blade…</div></div>
 <div id="error"><div id="errorText">Could not load the 3D model.</div></div>
 <div id="debug"></div>
 
+<script>
+// Embed dialog (v2.3): shows the iframe snippet for the client's own site.
+(function () {
+  var box = document.getElementById('embedBox');
+  var code = document.getElementById('embedCode');
+  var openBtn = document.getElementById('embedBtn');
+  var closeBtn = document.getElementById('embedClose');
+  var copyBtn = document.getElementById('embedCopy');
+  if (!box || !openBtn) return;
+  openBtn.addEventListener('click', function () { box.classList.add('open'); });
+  if (closeBtn) closeBtn.addEventListener('click', function () { box.classList.remove('open'); });
+  if (copyBtn) copyBtn.addEventListener('click', function () {
+    var done = function () { copyBtn.textContent = 'Copied ✓'; setTimeout(function () { copyBtn.textContent = 'Copy code'; }, 2000); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code.value).then(done, function () { code.select(); document.execCommand('copy'); done(); });
+    } else { code.select(); document.execCommand('copy'); done(); }
+  });
+})();
+</script>
 <script>
 // Dynamic import on purpose: a static <script type="module"> hides its load
 // failure (no window error fires), while import() rejects with the exact error.
