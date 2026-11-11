@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from './vendor/OrbitControls.js';
-import { GLTFLoader } from './vendor/GLTFLoader.js';
+import { GLTFLoader } from './vendor/loaders/GLTFLoader.js';
 import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 // ---------------------------------------------------------------------------
