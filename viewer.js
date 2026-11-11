@@ -65,6 +65,13 @@ scene.add(back);
 const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55);
 fill.position.set(-260, 60, -180);
 scene.add(fill);
+// v2.9: soft light from below-front — the handle butt faces down (-Y), so the
+// key lights (both above) never reach it and the medallion read as a
+// near-black disc with only a faint ring. 0.9 is gentle: it lifts the butt
+// without touching the faces.
+const under = new THREE.DirectionalLight(0xfff0dd, 0.9);
+under.position.set(0, -300, 140);
+scene.add(under);
 scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1c20, 0.35));
 
 // ---------------------------------------------------------------------------
@@ -84,7 +91,16 @@ scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1c20, 0.35));
 //   - Handle 2 (padauk + 3 light stripes) and all decals (serial, PALIS/OFF
 //     label, medallion) stay v1, derived from the client photos.
 // ---------------------------------------------------------------------------
-const texLoader = new THREE.TextureLoader();
+// v2.9: one LoadingManager for textures AND the model — the loading overlay
+// stays up until every texture is actually ready (before, it hid as soon as
+// the GLB arrived, so a cold load showed a pale untextured face for ~10 s
+// while the 4K maps were still downloading).
+const loadManager = new THREE.LoadingManager();
+const loadingText = document.getElementById('loadingText');
+loadManager.onProgress = function (url, loaded, total) {
+  if (loadingText) loadingText.textContent = 'Loading the blade… ' + loaded + '/' + total;
+};
+const texLoader = new THREE.TextureLoader(loadManager);
 function albedo(path) {
   const t = texLoader.load(path);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -215,7 +231,13 @@ function addDecals() {
   labelMesh.position.set(0, 0.049, 0.01315);
   modelGroup.add(labelMesh);
   // RESONANT medallion on the handle butt, facing down (-Y).
-  medallionMesh = new THREE.Mesh(new THREE.CircleGeometry(0.011, 48), decalMat(medallionTex));
+  // v2.9: its own material — slightly glossier than the other decals so the
+  // new under-light gives it a readable sheen.
+  const medallionMat = std({
+    map: medallionTex, transparent: true, roughness: 0.35,
+    polygonOffset: true, polygonOffsetFactor: -1,
+  });
+  medallionMesh = new THREE.Mesh(new THREE.CircleGeometry(0.011, 48), medallionMat);
   medallionMesh.rotation.x = Math.PI / 2;
   medallionMesh.position.set(0, -0.0001, 0);
   modelGroup.add(medallionMesh);
@@ -243,13 +265,34 @@ function applyHandle(design) {
   handleInfo.textContent = isH1
     ? 'Handle 1 — black wood · PALIS / OFF · serial S02025148'
     : 'Handle 2 — padauk with three light stripes · same CAD geometry';
+  // v2.9: the specs card (and the narrow-screen specs line) follow the handle.
+  const wood = isH1 ? 'Black wood' : 'Padauk';
+  const sw = document.getElementById('specWood'); if (sw) sw.textContent = wood;
+  const swm = document.getElementById('specWoodM'); if (swm) swm.textContent = wood;
   document.querySelectorAll('#handles button').forEach((b) => {
     b.classList.toggle('active', Number(b.dataset.handle) === design);
   });
 }
 
+// v2.9: the viewer starts only when BOTH the model and all textures are
+// ready. A 30 s fallback shows whatever is ready so a stalled texture can
+// never leave the viewer behind the overlay.
+let glbReady = false, texturesReady = false, started = false;
+function maybeReady() {
+  if (started || !glbReady || !texturesReady) return;
+  started = true;
+  loadingEl.style.display = 'none';
+  window.__viewerReady = true;
+  log('ready: animate start');
+  animate();
+}
+loadManager.onLoad = function () { texturesReady = true; log('textures: all loaded'); maybeReady(); };
+setTimeout(function () {
+  if (!started) { log('loading fallback: showing viewer after 30s'); texturesReady = true; maybeReady(); }
+}, 30000);
+
 log('glb: fetch start');
-new GLTFLoader().load(
+new GLTFLoader(loadManager).load(
   './model/blade_uv.glb',
   (gltf) => {
     log('glb: loaded');
@@ -287,10 +330,8 @@ new GLTFLoader().load(
     const f = applyFraming(currentBase);
     camera.position.copy(f.pos);
     controls.target.copy(f.tgt);
-    loadingEl.style.display = 'none';
-    window.__viewerReady = true;
-    log('ready: animate start');
-    animate();
+    glbReady = true;
+    maybeReady();
   },
   undefined,
   (err) => {
@@ -313,7 +354,9 @@ const VIEWS = {
   back:   { pos: [0, 0, -430],    tgt: [0, 0, 0] },
   edge:   { pos: [430, 0, 0],     tgt: [0, 0, 0] },
   handle: { pos: [90, -40, 300],  tgt: [0, -75, 0] },
-  butt:   { pos: [0, -430, 90],   tgt: [0, -129, 0] },
+  // v2.9: butt is closer (dist 210) and straighter — the 22 mm medallion
+  // was unreadable at the full-blade framing distance.
+  butt:   { pos: [0, -430, 40],   tgt: [0, -129, 0], dist: 210 },
 };
 // Base (unframed) view currently shown; framing adds distance + band offset.
 let currentBase = VIEWS.front;
@@ -342,7 +385,9 @@ function applyFraming(view) {
   const base = new THREE.Vector3(...view.tgt);
   const dir = new THREE.Vector3(...view.pos).sub(base).normalize();
   const tgt = new THREE.Vector3(base.x, base.y + f.offY, base.z);
-  const pos = tgt.clone().add(dir.multiplyScalar(f.dist));
+  // A view may override the framing distance (the butt close-up, v2.9).
+  const dist = view.dist || f.dist;
+  const pos = tgt.clone().add(dir.multiplyScalar(dist));
   return { pos, tgt };
 }
 
