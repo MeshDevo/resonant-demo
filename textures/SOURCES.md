@@ -1,5 +1,29 @@
 # Resonant demo — texture sources and processing
 
+## v2.7 (2026-11-11) — shoulder dome fixed (the last whiteness)
+
+v2.6 went live verified — but the handle-shoulder grey dome SURVIVED live
+(front 108, handle view 95–104), even though the local render showed it
+gone. Cause found by a vertical pixel profile: my local sample had hit the
+dome's lower edge (79), while its core (y 425–445) was still 102–110.
+The v2.6 roughness fix only dimmed the dome (167 -> 105); the rest is
+diffuse + environment light, which roughness cannot remove.
+
+- **Gradient test** (proof of the UV mapping): a red-top/blue-bottom test
+  texture showed red at the shoulder, so the handle texture's TOP rows map
+  to the shoulder. The dome is the handle face's curved top, facing the key
+  light and the environment map's bright ceiling.
+- **Fix, gentle version**: handle face materials keep their roughness map
+  (0.55–0.75) but `envMapIntensity` 1.0 -> 0.6; plus a narrow shoulder
+  grade in the albedo — top 12% darkened, 0.75 at the very top fading to
+  1.0 (handle1 mean 39.9 -> 38.7, handle2 mean ~120 -> 116.3). Handle1
+  normal recomputed from the graded albedo. A first attempt (matte +
+  env 0.25 + a strong 30% grade) overshot and crushed the shoulder to
+  near-black (~23); this gentler version lands it at ~79 locally (handle
+  body ~55-60), a natural highlight on the curve, not a dome.
+- The handle roughness maps stay in the repo (still used); the v2.6 caps
+  note is corrected in viewer.js (the cap was never the blob).
+
 ## v2.6 (2026-11-11) — realism, no exaggeration: toned-down rim, matte handles, brighter back
 
 Henry's morning note: the whiteness and blackness were overdone — realism,
