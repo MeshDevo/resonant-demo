@@ -1,5 +1,30 @@
 # Resonant demo — texture sources and processing
 
+## v2.5 (2026-11-11) — high-resolution set + layered rim from photo evidence
+
+- **Hires set** (`textures-hires/`, 16 files + README, `resonant-textures-hires.zip`
+  18 MB): faces/back at 4096×3111 (Lanczos from the 2350 native), true
+  handle1 re-extracted (922×2260), handle2 at 980×2670, decals 2–3×, rim
+  (see below). Approved by Henry for the live demo, on condition it does
+  not conflict with what the client published — it does not: every texture
+  comes from the client's own published photos, except the rim (below).
+- **Layered rim** (`blade_rim_albedo.jpg`, 1024×4096, md5 `b6c0fd138526`):
+  the old fir strip was uniformly orange-tan (mean 180,116,63) — wrong tone
+  and no layers. Evidence: the 3/4-angle official photo
+  `tier1_67_palis_straight_4.jpg` (5475px) shows the real edge as a pale
+  cream band (scanline: 235,215,198) with the dark face beginning abruptly
+  at its inner side. The UV mapping was verified from `model/uv_map.json`
+  (box projection): for blade rim primitives U = Z (the 6 mm thickness,
+  full 0..1) and V = Y (perimeter) — so the layers vary across the image
+  width. Built from the fir strip: middle retinted toward the photo's
+  cream (209,177,147) keeping the fir grain, outer bands dark rosewood
+  (72,46,46 at 0.85 alpha, grain showing through) at 12% of the thickness
+  each side, feathered 8 px. Proportions are approximate (exact ply
+  thicknesses still unknown); the structure (dark outer veneers + pale
+  spruce middle) matches both the photo and the published ply facts
+  (rosewood outer, Resonance Spruce intermediate, hide glue). Roughness
+  map unchanged (fir-derived).
+
 ## v2.4 (2026-11-11) — high-resolution TRUE face (front + back), developed not copied
 
 Henry's challenge: we develop the racket and make it more realistic — not
