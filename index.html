@@ -44,6 +44,30 @@
   }
   .panel-link:hover { border-color: #e07840; }
   .panel-link span { color: #e07840; }
+  /* Specs card (v2.9): verified facts at a glance — dimensions from the CAD
+     STEP file, class and woods from the client's own product page. The weight
+     is an estimate (the client publishes none) and is labelled as such; the
+     ply count is not published either, so the card shows the verified
+     construction instead of a count. */
+  #specs {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    width: 228px; z-index: 5; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid #3a3f47; background: rgba(20, 22, 26, .82);
+    backdrop-filter: blur(6px); font-size: 12.5px; line-height: 1.5;
+    pointer-events: none;
+  }
+  #specs h2 { font-size: 11px; letter-spacing: .18em; color: #e07840; margin-bottom: 6px; font-weight: 700; }
+  #specs .r { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+  #specs .k { color: #9aa0a6; flex: none; }
+  #specs .v { color: #e8e9eb; text-align: right; }
+  #specsLine { display: none; font-size: 11.5px; color: #a7adb8; text-align: center; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+  /* v2.9: the loading overlay is now (nearly) opaque so a still-untextured
+     face cannot show through it while the 4K maps download. */
+  #loading { background: rgba(14, 16, 19, .97); }
+  @media (max-width: 900px) {
+    #specs { display: none; }
+    #specsLine { display: block; }
+  }
   /* Embed dialog (v2.3): lets the client copy the iframe snippet straight
      from the page, or download the self-hosting .zip. */
   #embedBox {
@@ -155,7 +179,18 @@ setTimeout(function () {
   <div id="hint">Drag to rotate · Scroll or pinch to zoom · Right-drag to pan</div>
   <a class="site-link" href="https://resonant-tt.com/en/shop/hoelzer/palis/" target="_blank" rel="noopener">View on <span>resonant-tt.com</span> ↗</a>
 </header>
+<div id="specs">
+  <h2>SPECIFICATIONS</h2>
+  <div class="r"><span class="k">Dimensions</span><span class="v">258 × 151 × 6.0 mm</span></div>
+  <div class="r"><span class="k">Class</span><span class="v">OFF</span></div>
+  <div class="r"><span class="k">Face</span><span class="v">Rosewood</span></div>
+  <div class="r"><span class="k">Construction</span><span class="v">Rosewood · Resonance spruce · Hide glue</span></div>
+  <div class="r"><span class="k">Handle</span><span class="v" id="specWood">Black wood</span></div>
+  <div class="r"><span class="k">Weight</span><span class="v">≈ 90 g ±5 g (est.)</span></div>
+  <div class="r"><span class="k">Serial</span><span class="v">S02025148</span></div>
+</div>
 <div id="panel">
+  <div id="specsLine">258 × 151 × 6.0 mm · OFF · Rosewood · <span id="specWoodM">Black wood</span> · ≈ 90 g ±5 g (est.)</div>
   <div id="handleInfo"></div>
   <div class="row" id="handles">
     <button data-handle="1" class="active">Handle 1 — Black wood · PALIS / OFF</button>
@@ -184,7 +219,7 @@ setTimeout(function () {
     <button id="embedClose" class="view">Close</button>
   </div>
 </div>
-<div id="loading"><div class="spin"></div><div>Loading the blade…</div></div>
+<div id="loading"><div class="spin"></div><div id="loadingText">Loading the blade…</div></div>
 <div id="error"><div id="errorText">Could not load the 3D model.</div></div>
 <div id="debug"></div>
 
