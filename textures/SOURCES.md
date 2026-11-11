@@ -1,5 +1,22 @@
 # Resonant demo — texture sources and processing
 
+## v2.8 (2026-11-11) — white lowered: flat toned-down rim
+
+Henry: the white is annoying — remove it or lower it. This is the rim's
+pale middle. Two corrections in one:
+
+- **The dark bands are removed.** They were an over-interpretation: the
+  v2.5 scanline's dark values are the FACE (rosewood), not a rim layer.
+  The main thread's R3 D15 reads the edge as a uniform pale strip with no
+  distinguishable layer lines in any PALIS shot — so the rim is FLAT
+  again, and the layered structure stays UNKNOWN (a gap, not a guess),
+  pending the client's ply spec. The v2.5/v2.6 layered rim is superseded.
+- **The paleness is lowered.** Flat fir strip retinted only 0.2 toward a
+  muted cream (uniform mean 181,127,81 — a warm mid-brown, no longer
+  white). This deliberately departs from the measured flat colour
+  #DCD2C8 (220,210,200) on Henry's instruction (the white was annoying);
+  the structure (flat, no layer lines) follows R3 D15.
+
 ## v2.7 (2026-11-11) — shoulder dome fixed (the last whiteness)
 
 v2.6 went live verified — but the handle-shoulder grey dome SURVIVED live
