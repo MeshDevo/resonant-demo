@@ -1,5 +1,41 @@
 # Resonant demo — texture sources and processing
 
+## v2.6 (2026-11-11) — realism, no exaggeration: toned-down rim, matte handles, brighter back
+
+Henry's morning note: the whiteness and blackness were overdone — realism,
+no exaggeration. Three measured fixes, all verified in a local render
+before this deploy (headless screenshots + pixel sampling):
+
+- **Rim toned down** (`blade_rim_albedo.jpg`, 1024×4096, md5 `b8dccd7ddc9d`):
+  the v2.5 layered rim was too stark (rendered edge profile: dark R 47–80
+  at the bands vs pale R 164–215 in the middle). Rebuilt from the same fir
+  strip: middle retint gentler (0.5 alpha toward the cream, middle now
+  195,155,119 instead of 209,177,147), bands narrower (6% of the thickness
+  each side instead of 12%) and lighter (95,64,60 at 0.6 alpha, bands now
+  135,100,83 instead of 92,65,61). Still dark outer veneers + pale spruce
+  middle, proportions still approximate — just less contrast.
+- **Handle shoulder blob fixed** (the "whiteness"): a light-grey dome
+  (rendered 104,97,101) sat on top of the dark handle. First guess was the
+  handle top cap — wrong: changing the cap roughness changed nothing. A
+  debug render (flat colours per material) proved the blob is the handle
+  face's own curved shoulder catching a white specular pop: the handle
+  roughness maps were glossy (0.30–0.48). Both handles' roughness maps
+  were rebuilt from their albedo luminance at 0.55–0.75 (same band as the
+  blade faces). Shoulder now renders 79,70,75 — dark wood, no pop. Caps
+  also kept matte (0.95 / 0.9) as a precaution. Handle1 albedo got a
+  contrast-only grade (mean preserved 39.9,30.5,37.7 → 39.5,30.0,37.3;
+  std 9.2 → 16.4) so the dark wood's grain reads instead of flat black
+  (the "blackness"). Its roughness/normal were recomputed from the graded
+  albedo. Handle2 roughness rebuilt the same way (mean 0.674).
+- **Back light 5.0 → 6.0** (`viewer.js`): the back was still 82%/73% of
+  the front (95 vs 116). Measured response ≈ +15 red per +1.0 intensity,
+  so 6.0 should land the back at ~92% of the front without overshooting.
+  Local render confirmed: back 108 vs front 118 (92%).
+- **Rejection logging** (`index.html`): the unhandled-rejection handler
+  now logs `JSON.stringify(reason)` instead of `reason.message || reason`,
+  so the ten rejection lines (if they persist) finally show their reasons
+  instead of `[object Object]`.
+
 ## v2.5 (2026-11-11) — high-resolution set + layered rim from photo evidence
 
 - **Hires set** (`textures-hires/`, 16 files + README, `resonant-textures-hires.zip`
