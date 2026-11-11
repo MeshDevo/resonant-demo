@@ -51,10 +51,11 @@ log('environment: ok');
 const key = new THREE.DirectionalLight(0xffffff, 2.0);
 key.position.set(180, 260, 320);
 scene.add(key);
-// Back key (v2.1 fix): mirrors the front key. Without it the back face
-// rendered ~10x darker than the front (measured live: back centre RGB
-// 14,5,6 vs front 114,84,84) — the "unjustified blackness" the user saw.
-const back = new THREE.DirectionalLight(0xffffff, 2.0);
+// Back key (v2.1 fix, strengthened in v2.2): mirrors the front key. Without it
+// the back face rendered ~10x darker than the front (measured live: back centre
+// RGB 14,5,6 vs front 114,84,84). v2.1 raised it to 2.0 and the back reached
+// only ~43% of the front (49 vs 114), so v2.2 raises it to 3.0.
+const back = new THREE.DirectionalLight(0xffffff, 3.0);
 back.position.set(-180, 260, -320);
 scene.add(back);
 const fill = new THREE.DirectionalLight(0xdfe8ff, 0.55);

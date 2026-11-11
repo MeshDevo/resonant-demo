@@ -23,6 +23,27 @@
   header h1 { font-size: 22px; letter-spacing: .35em; font-weight: 700; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
   header h1 span { color: #e07840; }
   header p { margin-top: 4px; font-size: 12.5px; color: #a7adb8; letter-spacing: .08em; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
+  /* Link to the client's official site (v2.2). The header is
+     pointer-events:none, so the link re-enables pointer events. */
+  .site-link {
+    position: absolute; top: 18px; right: 20px; pointer-events: auto;
+    font: 600 12.5px/1 inherit; letter-spacing: .06em; color: #e8e9eb;
+    text-decoration: none; padding: 9px 13px; border-radius: 999px;
+    border: 1px solid #3a3f47; background: rgba(20, 22, 26, .82);
+    backdrop-filter: blur(6px); text-shadow: none;
+  }
+  .site-link:hover { border-color: #e07840; color: #fff; }
+  .site-link span { color: #e07840; }
+  /* Same link inside the bottom panel (mobile only — the header link
+     would collide with the title on narrow screens). */
+  .panel-link {
+    display: none; text-decoration: none; text-align: center;
+    border: 1px solid #3a3f47; background: rgba(20, 22, 26, .82);
+    color: #e8e9eb; font: 600 13px/1 inherit; padding: 10px 14px; border-radius: 999px;
+    cursor: pointer; backdrop-filter: blur(6px);
+  }
+  .panel-link:hover { border-color: #e07840; }
+  .panel-link span { color: #e07840; }
   #hint { margin-top: 6px; font-size: 12px; color: #9aa0a6; text-shadow: 0 1px 6px rgba(0, 0, 0, .7); }
   #panel {
     position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%);
@@ -66,6 +87,8 @@
     #panel { bottom: 12px; gap: 8px; }
     button { padding: 8px 12px; font-size: 12px; }
     button.view { padding: 7px 10px; }
+    .site-link { display: none; }
+    .panel-link { display: inline-block; padding: 8px 12px; font-size: 12px; }
   }
 </style>
 <script>
@@ -110,6 +133,7 @@ setTimeout(function () {
   <h1>RESONANT <span>·</span> PALIS OFF</h1>
   <p>Interactive 3D Table Tennis Blade Configurator — competition demo · Serial S02025148</p>
   <div id="hint">Drag to rotate · Scroll or pinch to zoom · Right-drag to pan</div>
+  <a class="site-link" href="https://resonant-tt.com/en/shop/hoelzer/palis/" target="_blank" rel="noopener">View on <span>resonant-tt.com</span> ↗</a>
 </header>
 <div id="panel">
   <div id="handleInfo"></div>
@@ -123,6 +147,9 @@ setTimeout(function () {
     <button class="view" data-view="edge">Blade edge</button>
     <button class="view" data-view="handle">Handle</button>
     <button class="view" data-view="butt">Handle butt</button>
+  </div>
+  <div class="row">
+    <a class="panel-link" href="https://resonant-tt.com/en/shop/hoelzer/palis/" target="_blank" rel="noopener">View on <span>resonant-tt.com</span> ↗</a>
   </div>
 </div>
 <div id="loading"><div class="spin"></div><div>Loading the blade…</div></div>
